@@ -1,0 +1,15 @@
+package(
+    default_visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "bcmdhd_101_10_591_srcs",
+    srcs = glob(
+        ["bcmdhd.101.10.591.x/**"],
+        exclude = [
+            "**/BUILD.bazel",
+            "**/*.bzl",
+            ".git/**",
+        ],
+    ),
+)

@@ -41,7 +41,6 @@
 
 # if not confiure pci mode, we use sdio mode as default
 ifeq ($(CONFIG_BCMDHD_PCIE),)
-$(info bcm SDIO driver configured)
 CONFIG_DHD_USE_STATIC_BUF := y
 endif
 
@@ -546,11 +545,9 @@ modules_install:
 	cd ${OUT_DIR}/$(M)/; find -name "*.ko" -exec cp {} ${OUT_DIR}/../vendor_lib/modules/ \;
 
 bcmdhd_sdio:
-	$(warning "building BCMDHD_SDIO..........")
 	$(MAKE) -C $(KERNEL_SRC) M=$(M) CONFIG_DHD_USE_STATIC_BUF=y modules
 
 bcmdhd_usb:
-	$(warning "building BCMDHD_USB..........")
 	$(MAKE) -C $(KDIR) M=$(PWD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) modules CONFIG_BCMDHD_USB=y
 
 clean:

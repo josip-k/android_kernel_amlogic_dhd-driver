@@ -15216,6 +15216,7 @@ dhd_module_init_hdm(void)
 }
 #endif /* DHD_SUPPORT_HDM */
 
+#ifndef CONFIG_HIBERNATION
 static int
 dhd_reboot_callback(struct notifier_block *this, unsigned long code, void *unused)
 {
@@ -15237,6 +15238,7 @@ dhd_reboot_callback(struct notifier_block *this, unsigned long code, void *unuse
 #endif /* OEM_ANDROID */
 	return NOTIFY_DONE;
 }
+#endif /* !CONFIG_HIBERNATION */
 
 #if defined(CONFIG_DEFERRED_INITCALLS) && !defined(EXYNOS_PCIE_MODULE_PATCH)
 /* XXX To decrease the device boot time, deferred_module_init() macro can be

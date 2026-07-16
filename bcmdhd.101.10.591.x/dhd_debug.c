@@ -1408,7 +1408,6 @@ dhd_dbg_set_event_log_tag(dhd_pub_t *dhdp, uint16 tag, uint8 set_num, uint8 is_s
 	wl_el_tag_params_t pars;
 	char *cmd = "event_log_tag_control";
 	char iovbuf[WLC_IOCTL_SMLEN] = { 0 };
-	int ret;
 
 	memset(&pars, 0, sizeof(pars));
 	pars.tag = tag;
@@ -1420,10 +1419,7 @@ dhd_dbg_set_event_log_tag(dhd_pub_t *dhdp, uint16 tag, uint8 set_num, uint8 is_s
 		return;
 	}
 
-	ret = dhd_wl_ioctl_cmd(dhdp, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0);
-//	if (ret) {
-//		DHD_ERROR(("%s set log tag iovar failed %d\n", __FUNCTION__, ret));
-//	}
+	dhd_wl_ioctl_cmd(dhdp, WLC_SET_VAR, iovbuf, sizeof(iovbuf), TRUE, 0);
 }
 
 int

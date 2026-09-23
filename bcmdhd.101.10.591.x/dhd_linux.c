@@ -11783,12 +11783,16 @@ done:
 	return ret;
 }
 
+/* Pre-591 size of the legacy "event_msgs" mask, required by BCM4339 6.37 firmware */
+#define LEGACY_EVENTING_MASK_LEN (16 + 4)
+
 int
 dhd_legacy_preinit_ioctls(dhd_pub_t *dhd)
 {
 	int ret = 0;
 	/*  Room for "event_msgs_ext" + '\0' + bitvec  */
 	char iovbuf[WL_EVENTING_MASK_EXT_LEN + EVENTMSGS_EXT_STRUCT_SIZE + 16];
+	bool legacy_event_msgs = FALSE;
 	char *mask;
 	uint32 buf_key_b4_m4 = 1;
 	uint8 msglen;
@@ -12856,13 +12860,20 @@ dhd_legacy_preinit_ioctls(dhd_pub_t *dhd)
 	ret = dhd_iovar(dhd, 0, "event_msgs_ext", (char *)eventmask_msg, msglen, iov_buf,
 			WLC_IOCTL_SMLEN, FALSE);
 
-	/* event_msgs_ext must be supported */
+	if (ret == BCME_UNSUPPORTED || ret == BCME_VERSION) {
+		/* Old firmware (e.g. BCM4339 6.37) only has the 20-byte event_msgs */
+		legacy_event_msgs = TRUE;
+		ret = dhd_iovar(dhd, 0, "event_msgs", NULL, 0, iov_buf, WLC_IOCTL_SMLEN, FALSE);
+		if (ret == BCME_OK)
+			bcopy(iov_buf, eventmask_msg->mask, LEGACY_EVENTING_MASK_LEN);
+	} else if (ret == BCME_OK) {
+		bcopy(iov_buf, eventmask_msg, msglen);
+	}
 	if (ret != BCME_OK) {
-		DHD_ERROR(("%s read event mask ext failed %d\n", __FUNCTION__, ret));
+		DHD_ERROR(("%s read event mask failed %d\n", __FUNCTION__, ret));
 		goto done;
 	}
 
-	bcopy(iov_buf, eventmask_msg, msglen);
 	/* make up event mask ext message iovar for event larger than 128 */
 	mask = eventmask_msg->mask;
 
@@ -13008,13 +13019,18 @@ dhd_legacy_preinit_ioctls(dhd_pub_t *dhd)
 
 	setbit(mask, WLC_E_FIFO_CREDIT_MAP);
 	/* Write updated Event mask */
-	eventmask_msg->ver = EVENTMSGS_VER;
-	eventmask_msg->command = EVENTMSGS_SET_MASK;
-	eventmask_msg->len = WL_EVENTING_MASK_EXT_LEN;
-	ret = dhd_iovar(dhd, 0, "event_msgs_ext", (char *)eventmask_msg, msglen, NULL, 0,
-			TRUE);
+	if (legacy_event_msgs) {
+		ret = dhd_iovar(dhd, 0, "event_msgs", mask, LEGACY_EVENTING_MASK_LEN, NULL, 0,
+				TRUE);
+	} else {
+		eventmask_msg->ver = EVENTMSGS_VER;
+		eventmask_msg->command = EVENTMSGS_SET_MASK;
+		eventmask_msg->len = WL_EVENTING_MASK_EXT_LEN;
+		ret = dhd_iovar(dhd, 0, "event_msgs_ext", (char *)eventmask_msg, msglen, NULL, 0,
+				TRUE);
+	}
 	if (ret < 0) {
-		DHD_ERROR(("%s write event mask ext failed %d\n", __FUNCTION__, ret));
+		DHD_ERROR(("%s write event mask failed %d\n", __FUNCTION__, ret));
 		goto done;
 	}
 
